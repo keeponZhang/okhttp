@@ -37,6 +37,7 @@ public final class CallServerInterceptor implements Interceptor {
   // 在最后一个拦截器中可以发现，并没有责任链procced的代码了，而是处理完之后就返回response了，很简单，因为整个请求链条执行完了，当然不需要再往下链了，此时就得往上一层层返，最终整个拦截器链的response就返回了
   @Override public Response intercept(Chain chain) throws IOException {
     RealInterceptorChain realChain = (RealInterceptorChain) chain;
+    //它里面有包含解码器了
     Exchange exchange = realChain.exchange();
     Request request = realChain.request();
 

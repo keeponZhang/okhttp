@@ -87,6 +87,7 @@ final class ExchangeFinder {
     try {
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
           writeTimeout, pingIntervalMillis, connectionRetryEnabled, doExtensiveHealthChecks);
+      // 需根据连接器来创建相应的解码器
       return resultConnection.newCodec(client, chain);
     } catch (RouteException e) {
       trackFailure();
@@ -101,9 +102,11 @@ final class ExchangeFinder {
    * Finds a connection and returns it if it is healthy. If it is unhealthy the process is repeated
    * until a healthy connection is found.
    */
+  //查找一个连接并且如果它是健康的则会返回。如果不是健康的那么该查找过程会重复知道查找到一个健康的为止
   private RealConnection findHealthyConnection(int connectTimeout, int readTimeout,
       int writeTimeout, int pingIntervalMillis, boolean connectionRetryEnabled,
       boolean doExtensiveHealthChecks) throws IOException {
+    //无限查找
     while (true) {
       RealConnection candidate = findConnection(connectTimeout, readTimeout, writeTimeout,
           pingIntervalMillis, connectionRetryEnabled);
@@ -130,6 +133,7 @@ final class ExchangeFinder {
    * Returns a connection to host a new stream. This prefers the existing connection if it exists,
    * then the pool, finally building a new connection.
    */
+  //返回一个主机的一个Stream的连接，如果该连接存在于复用池了，则直接返回现有已存在的，如果没有则会创建一个新的连接
   private RealConnection findConnection(int connectTimeout, int readTimeout, int writeTimeout,
       int pingIntervalMillis, boolean connectionRetryEnabled) throws IOException {
     boolean foundPooledConnection = false;
@@ -156,6 +160,7 @@ final class ExchangeFinder {
 
       if (result == null) {
         // Attempt to get a connection from the pool.
+        //会尝试从连接池中来查找连接
         if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, null, false)) {
           foundPooledConnection = true;
           result = transmitter.connection;
@@ -195,6 +200,7 @@ final class ExchangeFinder {
         // Now that we have a set of IP addresses, make another attempt at getting a connection from
         // the pool. This could match due to connection coalescing.
         routes = routeSelection.getAll();
+        //接着又来池中找连接，找到了即返回
         if (connectionPool.transmitterAcquirePooledConnection(
             address, transmitter, routes, false)) {
           foundPooledConnection = true;
@@ -209,6 +215,7 @@ final class ExchangeFinder {
 
         // Create a connection and assign it to this allocation immediately. This makes it possible
         // for an asynchronous cancel() to interrupt the handshake we're about to do.
+        //没有就new一个
         result = new RealConnection(connectionPool, selectedRoute);
         connectingConnection = result;
       }
@@ -221,6 +228,7 @@ final class ExchangeFinder {
     }
 
     // Do TCP + TLS handshakes. This is a blocking operation.
+    // 以上两次都没能从复用连接池中找到，接下来则需要发起一次真正的连接了
     result.connect(connectTimeout, readTimeout, writeTimeout, pingIntervalMillis,
         connectionRetryEnabled, call, eventListener);
     connectionPool.routeDatabase.connected(result.route());
@@ -230,6 +238,7 @@ final class ExchangeFinder {
       connectingConnection = null;
       // Last attempt at connection coalescing, which only occurs if we attempted multiple
       // concurrent connections to the same host.
+
       if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, routes, true)) {
         // We lost the race! Close the connection we created and return the pooled connection.
         result.noNewExchanges = true;

@@ -180,9 +180,11 @@ public final class RealConnection extends Http2Connection.Listener implements Co
             break;
           }
         } else {
+          //准备连接
           connectSocket(connectTimeout, readTimeout, call, eventListener);
         }
         establishProtocol(connectionSpecSelector, pingIntervalMillis, call, eventListener);
+        //进行连接成功与失败的回调了
         eventListener.connectEnd(call, route.socketAddress(), route.proxy(), protocol);
         break;
       } catch (IOException e) {
@@ -248,6 +250,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   }
 
   /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
+  //做了所有网络工作，接下来则通过原生的socket来构建一个完整的Http或Https连接，看到这是不是明白开篇做的那个sockct实验的目的，原来OkHttp的底层是基于Socket来实现的
   private void connectSocket(int connectTimeout, int readTimeout, Call call,
       EventListener eventListener) throws IOException {
     Proxy proxy = route.proxy();
@@ -260,6 +263,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     eventListener.connectStart(call, route.socketAddress(), proxy);
     rawSocket.setSoTimeout(readTimeout);
     try {
+      //获取平台连接，由于OkHttp可以在多平台使用，所以平台连接也不一样，这里当然是Android平台咯
+      //AndroidPlatform
       Platform.get().connectSocket(rawSocket, route.socketAddress(), connectTimeout);
     } catch (ConnectException e) {
       ConnectException ce = new ConnectException("Failed to connect to " + route.socketAddress());
@@ -538,7 +543,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
     return true; // Success. The URL is supported.
   }
-
+  //根据Http的协议类型来创建不同的解码器，有了解码器之后，接下来就可以用它对整个通信数据进行使用了，具体的通信步骤则是最后一个拦截器所承担的CallServerInterceptor
   ExchangeCodec newCodec(OkHttpClient client, Interceptor.Chain chain) throws SocketException {
     if (http2Connection != null) {
       return new Http2ExchangeCodec(client, this, chain, http2Connection);

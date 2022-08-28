@@ -51,6 +51,7 @@ import static okhttp3.internal.Util.sameConnection;
  * but not the other streams sharing its connection. But if the TLS handshake is still in progress
  * then canceling may break the entire connection.
  */
+//它是Okhttp应用层和网络层之前的桥梁，开放了高等级的应用层原语：连接，请求，响应和流
 public final class Transmitter {
   private final OkHttpClient client;
   private final RealConnectionPool connectionPool;
@@ -155,6 +156,7 @@ public final class Transmitter {
   }
 
   /** Returns a new exchange to carry a new request and response. */
+  //返回一个新的交换来创建一个新的请求和响应
   Exchange newExchange(Interceptor.Chain chain, boolean doExtensiveHealthChecks) {
     synchronized (connectionPool) {
       if (noMoreExchanges) {
@@ -165,7 +167,7 @@ public final class Transmitter {
             + "is still open: please call response.close()");
       }
     }
-
+    //获得了一个解码器
     ExchangeCodec codec = exchangeFinder.find(client, chain, doExtensiveHealthChecks);
     Exchange result = new Exchange(this, call, eventListener, exchangeFinder, codec);
 

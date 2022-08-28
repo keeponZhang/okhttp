@@ -32,12 +32,15 @@ public final class ConnectInterceptor implements Interceptor {
   }
 
   @Override public Response intercept(Chain chain) throws IOException {
+    //这个是从上一个拦截器下来的，所以是缓存拦截器
     RealInterceptorChain realChain = (RealInterceptorChain) chain;
     Request request = realChain.request();
+    //获取了一个发射器对象
     Transmitter transmitter = realChain.transmitter();
 
     // We need the network to satisfy this request. Possibly for validating a conditional GET.
     boolean doExtensiveHealthChecks = !request.method().equals("GET");
+    // 获得一个Exchange对象
     Exchange exchange = transmitter.newExchange(chain, doExtensiveHealthChecks);
     //处理完则开始责任链CallServerInterceptor
     return realChain.proceed(request, transmitter, exchange);

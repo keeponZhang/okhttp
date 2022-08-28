@@ -66,7 +66,7 @@ public final class RealConnectionPool {
       }
     }
   };
-
+  //里面维护了一个连接池
   private final Deque<RealConnection> connections = new ArrayDeque<>();
   final RouteDatabase routeDatabase = new RouteDatabase();
   boolean cleanupRunning;

@@ -61,6 +61,7 @@ final class RealCall implements Call {
   static RealCall newRealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
     // Safely publish the Call instance to the EventListener.
     RealCall call = new RealCall(client, originalRequest, forWebSocket);
+    //这里会创建一个Transmitter
     call.transmitter = new Transmitter(client, call);
     return call;
   }
@@ -228,7 +229,7 @@ final class RealCall implements Call {
     interceptors.add(new CallServerInterceptor(forWebSocket));
 
     //将所有的拦截器最终都包装到了RealInterceptorChain，也就是拦截器链对象当中去了
-    //这的index传了0，很显然会先取第一个拦截器进行处理
+    //这的index传了0，很显然会先取第一个拦截器进行处理；还有注意的是传入了一个transmitter
     Interceptor.Chain chain = new RealInterceptorChain(interceptors, transmitter, null, 0,
         originalRequest, this, client.connectTimeoutMillis(),
         client.readTimeoutMillis(), client.writeTimeoutMillis());
