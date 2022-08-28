@@ -57,7 +57,7 @@ final class RealCall implements Call {
     this.originalRequest = originalRequest;
     this.forWebSocket = forWebSocket;
   }
-
+  //发现木有使用建造者模式了，因为参数不够多---
   static RealCall newRealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
     // Safely publish the Call instance to the EventListener.
     RealCall call = new RealCall(client, originalRequest, forWebSocket);
@@ -77,6 +77,7 @@ final class RealCall implements Call {
     transmitter.timeoutEnter();
     transmitter.callStart();
     try {
+      //分发器，这个在创建OkHttpClicent这个对象的时候有看到过，在请求前执行一下，在请求后又执行一下，到底在干嘛呢？
       client.dispatcher().executed(this);
       return getResponseWithInterceptorChain();
     } finally {
@@ -151,6 +152,7 @@ final class RealCall implements Call {
       assert (!Thread.holdsLock(client.dispatcher()));
       boolean success = false;
       try {
+        //开始执行此线程，进而执行  Real.AsyncCall.execute
         executorService.execute(this);
         success = true;
       } catch (RejectedExecutionException e) {
@@ -169,8 +171,10 @@ final class RealCall implements Call {
       boolean signalledCallback = false;
       transmitter.timeoutEnter();
       try {
+        //又见着拦截器连方法，发起请求最终返回Response
         Response response = getResponseWithInterceptorChain();
         signalledCallback = true;
+        //根据状态回调，最终我们就收到请求结果反馈了
         responseCallback.onResponse(RealCall.this, response);
       } catch (IOException e) {
         if (signalledCallback) {
@@ -180,6 +184,7 @@ final class RealCall implements Call {
           responseCallback.onFailure(RealCall.this, e);
         }
       } finally {
+        //请求结束还得从队列移除掉
         client.dispatcher().finished(this);
       }
     }
@@ -198,20 +203,32 @@ final class RealCall implements Call {
   String redactedUrl() {
     return originalRequest.url().redact();
   }
+  // networkInterceptors,interceptors
+  //关于这俩的区别，就看请求实际，很明显这个网络拦截器是在跟服务器建立了连接之后在执行的
 
+  //几大拦截器就应运而生，也就是实际被问得最多的地方
   Response getResponseWithInterceptorChain() throws IOException {
     // Build a full stack of interceptors.
     List<Interceptor> interceptors = new ArrayList<>();
+    //用户添加的全局拦截器
     interceptors.addAll(client.interceptors());
+    //错误、重定向拦截器
     interceptors.add(new RetryAndFollowUpInterceptor(client));
+    //桥接拦截器，桥接应用层与网络层，添加必要的头
     interceptors.add(new BridgeInterceptor(client.cookieJar()));
+    //缓存处理，Last-Modified、ETag、DiskLruCache等
     interceptors.add(new CacheInterceptor(client.internalCache()));
+    //连接拦截器
     interceptors.add(new ConnectInterceptor(client));
     if (!forWebSocket) {
+      //通过okHttpClient.Builder#addNetworkInterceptor()传进来的拦截器只对非网页的请求生效
       interceptors.addAll(client.networkInterceptors());
     }
+    //真正访问服务器的拦截器
     interceptors.add(new CallServerInterceptor(forWebSocket));
 
+    //将所有的拦截器最终都包装到了RealInterceptorChain，也就是拦截器链对象当中去了
+    //这的index传了0，很显然会先取第一个拦截器进行处理
     Interceptor.Chain chain = new RealInterceptorChain(interceptors, transmitter, null, 0,
         originalRequest, this, client.connectTimeoutMillis(),
         client.readTimeoutMillis(), client.writeTimeoutMillis());

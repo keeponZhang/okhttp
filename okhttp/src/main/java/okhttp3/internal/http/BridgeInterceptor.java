@@ -37,6 +37,7 @@ import static okhttp3.internal.Util.hostHeader;
  * request. Then it proceeds to call the network. Finally it builds a user response from the network
  * response.
  */
+// 桥接拦截器，桥接应用层与网络层，添加必要的头，关于gzip的处理就是在这个拦截器中处理的
 public final class BridgeInterceptor implements Interceptor {
   private final CookieJar cookieJar;
 
@@ -89,7 +90,7 @@ public final class BridgeInterceptor implements Interceptor {
     if (userRequest.header("User-Agent") == null) {
       requestBuilder.header("User-Agent", Version.userAgent());
     }
-
+    //处理完则开始责任链CacheInterceptor
     Response networkResponse = chain.proceed(requestBuilder.build());
 
     HttpHeaders.receiveHeaders(cookieJar, userRequest.url(), networkResponse.headers());

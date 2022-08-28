@@ -67,7 +67,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
   public RetryAndFollowUpInterceptor(OkHttpClient client) {
     this.client = client;
   }
-
+  //此时一定要注意，这个是那个新包装的拦截器链，index=1
   @Override public Response intercept(Chain chain) throws IOException {
     Request request = chain.request();
     RealInterceptorChain realChain = (RealInterceptorChain) chain;
@@ -76,6 +76,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     int followUpCount = 0;
     Response priorResponse = null;
     while (true) {
+      //开始本拦截器的真正处理
       transmitter.prepareToConnect(request);
 
       if (transmitter.isCanceled()) {
@@ -85,6 +86,8 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       Response response;
       boolean success = false;
       try {
+        //然后又调用拦截器链的方法继续让链条往下执行
+        //（此时又回到了拦截器链了，同样的先包装index+1=2的新拦截器链，然后取出当前index=1的链接器进行调用：BridgeInterceptor)
         response = realChain.proceed(request, transmitter, null);
         success = true;
       } catch (RouteException e) {

@@ -36,6 +36,7 @@ import okhttp3.internal.Util;
  * own executor, it should be able to run {@linkplain #getMaxRequests the configured maximum} number
  * of calls concurrently.
  */
+//分发器的作用是用来管理请求的
 public final class Dispatcher {
   private int maxRequests = 64;
   private int maxRequestsPerHost = 5;
@@ -132,6 +133,7 @@ public final class Dispatcher {
 
   void enqueue(AsyncCall call) {
     synchronized (this) {
+      //更新一下准备发起请求的队列
       readyAsyncCalls.add(call);
 
       // Mutate the AsyncCall so that it shares the AtomicInteger of an existing running call to
@@ -141,6 +143,7 @@ public final class Dispatcher {
         if (existingCall != null) call.reuseCallsPerHostFrom(existingCall);
       }
     }
+    //  promote是推动的意思，从这单词就可以看出准备要用线程池开跑了
     promoteAndExecute();
   }
 
@@ -200,13 +203,14 @@ public final class Dispatcher {
     }
 
     for (int i = 0, size = executableCalls.size(); i < size; i++) {
+      //直达核心，看到了一个executorService（）方法作为executorService的方法参数
       AsyncCall asyncCall = executableCalls.get(i);
       asyncCall.executeOn(executorService());
     }
 
     return isRunning;
   }
-
+  //要开始请求啦，则添加到正在运行的队列中
   /** Used by {@code Call#execute} to signal it is in-flight. */
   synchronized void executed(RealCall call) {
     runningSyncCalls.add(call);
@@ -226,6 +230,7 @@ public final class Dispatcher {
   private <T> void finished(Deque<T> calls, T call) {
     Runnable idleCallback;
     synchronized (this) {
+      //当请求结束了，当前得从正在运行的队列中移除啦
       if (!calls.remove(call)) throw new AssertionError("Call wasn't in-flight!");
       idleCallback = this.idleCallback;
     }

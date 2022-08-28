@@ -129,7 +129,7 @@ public final class Request {
       this.method = "GET";
       this.headers = new Headers.Builder();
     }
-
+    //就是构建一些请求地址，头信息，请求方法之类的，比较简单
     Builder(Request request) {
       this.url = request.url;
       this.method = request.method;

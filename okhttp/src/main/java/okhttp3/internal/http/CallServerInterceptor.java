@@ -26,13 +26,15 @@ import okio.BufferedSink;
 import okio.Okio;
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
+//真正访问服务器的拦截器
+//   这里就真正的会发起跟服务器的具体通信，最终返回Resonse了
 public final class CallServerInterceptor implements Interceptor {
   private final boolean forWebSocket;
 
   public CallServerInterceptor(boolean forWebSocket) {
     this.forWebSocket = forWebSocket;
   }
-
+  // 在最后一个拦截器中可以发现，并没有责任链procced的代码了，而是处理完之后就返回response了，很简单，因为整个请求链条执行完了，当然不需要再往下链了，此时就得往上一层层返，最终整个拦截器链的response就返回了
   @Override public Response intercept(Chain chain) throws IOException {
     RealInterceptorChain realChain = (RealInterceptorChain) chain;
     Exchange exchange = realChain.exchange();

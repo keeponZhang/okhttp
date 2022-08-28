@@ -136,8 +136,12 @@ public final class RealInterceptorChain implements Interceptor.Chain {
     }
 
     // Call the next interceptor in the chain.
+    //这里又创建了一个拦截器链对象，但是跟之前的不同的是：此时index+1,然后再将当前的拦截器进行包装，那很明显接下来则取第二个烂机器进行处理了嘛
     RealInterceptorChain next = new RealInterceptorChain(interceptors, transmitter, exchange,
         index + 1, request, call, connectTimeout, readTimeout, writeTimeout);
+
+    // 接下来则会真正取出index的拦截器，然后再执行这个拦截器的intercept方法了，然后将新包装的拦截器链又传给这个在处理的拦截器的方法了
+    // 此时调用会转到第一个拦截器了，加入用户没有定义，此时就会执行RetryAndFollowUpInterceptor
     Interceptor interceptor = interceptors.get(index);
     Response response = interceptor.intercept(next);
 

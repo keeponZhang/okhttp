@@ -415,33 +415,88 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   }
 
   public static final class Builder {
+    //调度器
     Dispatcher dispatcher;
+    /**
+     * 代理类，默认有三种代理模式DIRECT(直连),HTTP(http代理),SOCKS(socks代理)
+     */
     @Nullable Proxy proxy;
+    /**
+     * 协议集合，协议类，用来表示使用的协议版本，比如`http/1.0,`http/1.1,`spdy/3.1,`h2等
+     */
     List<Protocol> protocols;
+    /**
+     * 连接规范，用于配置Socket连接层。对于HTTPS，还能配置安全传输层协议(TLS)版本和密码套件
+     */
     List<ConnectionSpec> connectionSpecs;
+    //拦截器，可以监听、重写和重试请求等
     final List<Interceptor> interceptors = new ArrayList<>();
     final List<Interceptor> networkInterceptors = new ArrayList<>();
     EventListener.Factory eventListenerFactory;
+    /**
+     * 代理选择类，默认不使用代理，即使用直连方式，当然，我们可以自定义配置，
+     * 以指定URI使用某种代理，类似代理软件的PAC功能
+     */
     ProxySelector proxySelector;
+    //Cookie的保存获取
     CookieJar cookieJar;
+    /**
+     * 缓存类，内部使用了DiskLruCache来进行管理缓存，匹配缓存的机制不仅仅是根据url，
+     * 而且会根据请求方法和请求头来验证是否可以响应缓存。此外，仅支持GET请求的缓存
+     */
     @Nullable Cache cache;
+    //内置缓存
     @Nullable InternalCache internalCache;
     SocketFactory socketFactory;
+    //Socket的抽象创建工厂，通过createSocket来创建Socket
     @Nullable SSLSocketFactory sslSocketFactory;
+    /**
+     * 证书链清洁器，HTTPS相关，用于从[Java]的TLS API构建的原始数组中统计有效的证书链，
+     * 然后清除跟TLS握手不相关的证书，提取可信任的证书以便可以受益于证书锁机制。
+     */
     @Nullable CertificateChainCleaner certificateChainCleaner;
+    /**
+     * 主机名验证器，与HTTPS中的SSL相关，当握手时如果URL的主机名
+     * 不是可识别的主机，就会要求进行主机名验证
+     */
     HostnameVerifier hostnameVerifier;
+    /**
+     * 证书锁，HTTPS相关，用于约束哪些证书可以被信任，可以防止一些已知或未知
+     * 的中间证书机构带来的攻击行为。如果所有证书都不被信任将抛出SSLPeerUnverifiedException异常。
+     */
     CertificatePinner certificatePinner;
+    /**
+     * 身份认证器，当连接提示未授权时，可以通过重新设置请求头来响应一个
+     * 新的Request。状态码401表示远程服务器请求授权，407表示代理服务器请求授权。
+     * 该认证器在需要时会被RetryAndFollowUpInterceptor触发。
+     */
     Authenticator proxyAuthenticator;
     Authenticator authenticator;
+    /**
+     * 连接池
+     *
+     * 我们通常将一个客户端和服务端和连接抽象为一个 connection，
+     * 而每一个 connection 都会被存放在 connectionPool 中，由它进行统一的管理，
+     * 例如有一个相同的 http 请求产生时，connection 就可以得到复用
+     */
     ConnectionPool connectionPool;
+    //域名解析系统
     Dns dns;
+    //是否遵循SSL重定向
     boolean followSslRedirects;
+    //是否重定向
     boolean followRedirects;
+    //失败是否重新连接
     boolean retryOnConnectionFailure;
+    //回调超时
     int callTimeout;
+    //连接超时
     int connectTimeout;
+    //读取超时
     int readTimeout;
+    //写入超时
     int writeTimeout;
+    //与WebSocket有关，为了保持长连接，我们必须间隔一段时间发送一个ping指令进行保活
     int pingInterval;
 
     public Builder() {
@@ -450,6 +505,9 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       connectionSpecs = DEFAULT_CONNECTION_SPECS;
       eventListenerFactory = EventListener.factory(EventListener.NONE);
       proxySelector = ProxySelector.getDefault();
+      /**
+       * 代理选择类，默认不使用代理，即使用直连方式，当然，我们可以自定义配置，以指定URI使用某种代理，类似代理软件的PAC功能
+       */
       if (proxySelector == null) {
         proxySelector = new NullProxySelector();
       }

@@ -43,6 +43,7 @@ import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.Util.discard;
 
 /** Serves requests from the cache and writes responses to the cache. */
+// CacheInterceptor：缓存处理，Last-Modified、ETag、DiskLruCache等
 public final class CacheInterceptor implements Interceptor {
   final @Nullable InternalCache cache;
 
@@ -91,6 +92,7 @@ public final class CacheInterceptor implements Interceptor {
 
     Response networkResponse = null;
     try {
+      //处理完则开始责任链ConnectInterceptor
       networkResponse = chain.proceed(networkRequest);
     } finally {
       // If we're crashing on I/O or otherwise, don't leak the cache body.

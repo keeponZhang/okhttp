@@ -39,7 +39,7 @@ public final class ConnectInterceptor implements Interceptor {
     // We need the network to satisfy this request. Possibly for validating a conditional GET.
     boolean doExtensiveHealthChecks = !request.method().equals("GET");
     Exchange exchange = transmitter.newExchange(chain, doExtensiveHealthChecks);
-
+    //处理完则开始责任链CallServerInterceptor
     return realChain.proceed(request, transmitter, exchange);
   }
 }
